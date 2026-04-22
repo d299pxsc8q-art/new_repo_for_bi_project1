@@ -4,6 +4,7 @@ import csv
 import json
 import os
 import sys
+from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -86,6 +87,24 @@ def write_json(rows: list[dict], output_path: str) -> None:
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(rows, f, ensure_ascii=False, indent=2)
 
+def resolve_api_key(cli_api_key: str | None, api_key_file: str | None) -> str | None:
+    if cli_api_key and cli_api_key.strip():
+        return cli_api_key.strip()
+
+    for env_var in ("ALPHA_VANTAGE_API_KEY", "AV_API_KEY"):
+        value = os.getenv(env_var)
+        if value and value.strip():
+            return value.strip()
+
+    if api_key_file:
+        key_path = Path(api_key_file).expanduser()
+        if key_path.exists():
+            key_value = key_path.read_text(encoding="utf-8").strip()
+            if key_value:
+                return key_value
+
+    return None
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -94,6 +113,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--api-key",
         help="Clé API Alpha Vantage (optionnelle si ALPHA_VANTAGE_API_KEY est définie).",
+    )
+    parser.add_argument(
+        "--api-key-file",
+        default="alpha_vantage_api_key.txt",
+        help="Fichier contenant la clé API sur la première ligne (utile pour Power BI).",
     )
     parser.add_argument("--symbol", default="IBM", help="Symbole boursier (ex: IBM, AAPL).")
     parser.add_argument(
@@ -125,11 +149,11 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
-    api_key = args.api_key or os.getenv("ALPHA_VANTAGE_API_KEY")
+    api_key = resolve_api_key(args.api_key, args.api_key_file)
 
     if not api_key:
         print(
-            "Échec: fournissez --api-key ou définissez ALPHA_VANTAGE_API_KEY.",
+            "Échec: fournissez --api-key, définissez ALPHA_VANTAGE_API_KEY, ou créez alpha_vantage_api_key.txt.",
             file=sys.stderr,
         )
         return 1

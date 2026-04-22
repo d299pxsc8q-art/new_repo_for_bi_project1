@@ -143,6 +143,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+alpha_vantage_api_key.txt
 
 # Spyder project settings
 .spyderproject

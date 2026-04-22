@@ -32,8 +32,19 @@ $env:ALPHA_VANTAGE_API_KEY="{{ALPHA_VANTAGE_API_KEY}}"
 python .\alpha_vantage_fetch.py --symbol IBM --interval 5min --format csv --output-file alpha_vantage_intraday.csv
 ```
 
+### Option 3 : utiliser un fichier de clé API (recommandé pour Power BI)
+Créez un fichier `alpha_vantage_api_key.txt` dans le dossier du projet avec la clé sur la première ligne :
+```text
+{{ALPHA_VANTAGE_API_KEY}}
+```
+Puis lancez :
+```powershell
+python .\alpha_vantage_fetch.py --symbol IBM --interval 5min --format csv --output-file alpha_vantage_intraday.csv
+```
+
 ## Options disponibles
 - `--api-key` : clé API Alpha Vantage (optionnelle si `ALPHA_VANTAGE_API_KEY` est définie)
+- `--api-key-file` : fichier texte contenant la clé API (défaut : `alpha_vantage_api_key.txt`)
 - `--symbol` : symbole boursier (défaut : `IBM`)
 - `--interval` : intervalle intraday (`1min`, `5min`, `15min`, `30min`, `60min`; défaut : `5min`)
 - `--outputsize` : volume de données (`compact` ou `full`; défaut : `compact`)
@@ -50,3 +61,12 @@ Le script retourne un code de sortie non nul si :
 - la clé API est absente
 - l’API retourne une erreur (limite de taux, symbole invalide, etc.)
 - une erreur réseau survient
+
+## Dépannage Power BI (erreur ADO.NET)
+Si Power BI affiche une erreur du type :
+`Échec: fournissez --api-key ou définissez ALPHA_VANTAGE_API_KEY`
+
+Utilisez l’option la plus robuste pour Power BI :
+1. Créez `alpha_vantage_api_key.txt` avec votre clé API.
+2. Générez le CSV avec le script Python.
+3. Importez le CSV dans Power BI via **Obtenir des données > Texte/CSV**.
