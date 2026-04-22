@@ -3,6 +3,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import alpha_vantage_fetch as av
 
@@ -80,6 +81,24 @@ class TestExportWriters(unittest.TestCase):
                 json_rows = json.load(f)
             self.assertEqual(len(json_rows), 1)
             self.assertEqual(json_rows[0]["symbol"], "IBM")
+class TestResolveApiKey(unittest.TestCase):
+    def test_resolve_api_key_prefers_cli_argument(self):
+        with mock.patch.dict("os.environ", {"ALPHA_VANTAGE_API_KEY": "env_key"}, clear=False):
+            key = av.resolve_api_key("cli_key", "missing.txt")
+        self.assertEqual(key, "cli_key")
+
+    def test_resolve_api_key_uses_environment(self):
+        with mock.patch.dict("os.environ", {"ALPHA_VANTAGE_API_KEY": "env_key"}, clear=False):
+            key = av.resolve_api_key(None, "missing.txt")
+        self.assertEqual(key, "env_key")
+
+    def test_resolve_api_key_uses_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            key_file = Path(tmp) / "alpha_vantage_api_key.txt"
+            key_file.write_text("file_key\n", encoding="utf-8")
+            with mock.patch.dict("os.environ", {}, clear=True):
+                key = av.resolve_api_key(None, str(key_file))
+        self.assertEqual(key, "file_key")
 
 
 if __name__ == "__main__":
